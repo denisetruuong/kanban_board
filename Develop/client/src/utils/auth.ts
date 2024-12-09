@@ -1,53 +1,54 @@
-import { JwtPayload, jwtDecode } from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
-interface CustomJwtPayload extends JwtPayload {
-  esp?: number;
+interface UserToken {
+  name: string;
+  exp: number;
 }
 
+// create a new class to instantiate for a user
 class AuthService {
+  // get user data
   getProfile() {
-    const token = this.getToken();
-    return token ? jwtDecode<CustomJwtPayload>(token) : null;
-    // TODO: return the decoded token
+    return jwtDecode(this.getToken() || "");
   }
 
-  loggedIn(): boolean {
+  // check if user's logged in
+  loggedIn() {
+    // Checks if there is a saved token and it's still valid
     const token = this.getToken();
-    return !!token && !this.isTokenExpired(token);
-    // TODO: return a value that indicates if the user is logged in
+    return !!token && !this.isTokenExpired(token); // handwaiving here
   }
 
+  // check if token is expired
   isTokenExpired(token: string) {
     try {
-      const decoded = jwtDecode<CustomJwtPayload>(token);
-      if (decoded.esp) {
-        const currentTime = Math.floor(Date.now() / 1000);
-        return decoded.esp < currentTime;
+      const decoded = jwtDecode<UserToken>(token);
+      if (decoded.exp < Date.now() / 1000) {
+        return true;
       }
+
       return false;
     } catch (err) {
       return false;
     }
-    // TODO: return a value that indicates if the token is expired
   }
 
-  getToken(): string | null {
+  getToken() {
+    // Retrieves the user token from localStorage
     return localStorage.getItem("id_token");
-    // TODO: return the token
   }
 
   login(idToken: string) {
+    // Saves user token to localStorage
     localStorage.setItem("id_token", idToken);
     window.location.assign("/");
-    // TODO: set the token to localStorage
-    // TODO: redirect to the home page
   }
 
   logout() {
+    // Clear user token and profile data from localStorage
     localStorage.removeItem("id_token");
-    window.location.assign("/login");
-    // TODO: remove the token from localStorage
-    // TODO: redirect to the login page
+    // this will reload the page and reset the state of the application
+    window.location.assign("/");
   }
 }
 
